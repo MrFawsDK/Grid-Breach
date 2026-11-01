@@ -20,7 +20,7 @@ Brikkerne trækkes fra en fast tabel. Den kan du se i menuen inde i spillet. Det
 
 Hvert spil har et seed, f.eks. `K7RM2Q`. Samme seed giver de samme brikker hos alle, så send dit seed til en ven og se, hvem der får flest point.
 
-"Hjælpsom trækning" er slået til som standard. Så kan de tre brikker du får altid lægges på brættet på en eller anden måde. Du kan stadig tabe, hvis du lægger dem dumt. Slå den fra i menuen, hvis du vil have det helt råt.
+De tre brikker du får, kan altid lægges på brættet på en eller anden måde. Nogle gange skal du først rydde en linje for at få plads til den sidste. Spillet tjekker det, før du får brikkerne. Du kan stadig tabe, men så er det fordi du lagde dem dumt.
 
 ## Point
 
