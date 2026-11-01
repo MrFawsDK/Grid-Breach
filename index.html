@@ -138,7 +138,6 @@ h1::after { color: var(--cyan); animation: glitchB 5s infinite steps(1); }
 .slot:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
 .slot.sel { border-color: var(--neon); box-shadow: 0 0 12px color-mix(in srgb, var(--neon) 35%, transparent); }
 .slot.lifted .mini { opacity: 0; }
-.slot.nofit .mini { opacity: .25; filter: grayscale(.8); }
 .slot.fresh .mini { animation: deal .3s ease-out both; }
 .slot.fresh:nth-child(2) .mini { animation-delay: .06s; }
 .slot.fresh:nth-child(3) .mini { animation-delay: .12s; }
@@ -251,7 +250,6 @@ td.pct { color: var(--neon); }
     </div>
     <label class="sw" for="opt-sound"><input type="checkbox" id="opt-sound"><span><b>Lyd</b>Synth-lyde når du lægger og rydder.</span></label>
     <label class="sw" for="opt-vibe"><input type="checkbox" id="opt-vibe"><span><b>Vibration</b>Kort summen ved hvert træk. Virker på de fleste Android-telefoner.</span></label>
-    <label class="sw" for="opt-helpful"><input type="checkbox" id="opt-helpful"><span><b>Hjælpsom trækning</b>Hvert sæt kan altid lægges i en eller anden rækkefølge. Du kan stadig tabe, hvis du lægger dårligt. Gælder fra næste spil.</span></label>
     <div>
       <h3>SEED</h3>
       <div class="seedrow">
@@ -268,6 +266,7 @@ td.pct { color: var(--neon); }
       <h3>FAIRNESS</h3>
       <ul>
         <li>Brikker trækkes tre ad gangen fra tabellen nedenfor med faste sandsynligheder.</li>
+        <li>Alle tre brikker kan altid lægges på brættet på en eller anden måde, nogle gange først efter du har ryddet en linje. Du kan stadig tabe, hvis du lægger dem dumt.</li>
         <li>Trækket bruger kun seed'et og brættet. Din score, din spilletid og din telefon indgår aldrig.</li>
         <li>Samme seed og samme træk giver de samme brikker på alle enheder. Send dit seed til en ven og dyst.</li>
         <li>Ingen reklamer, ingen sporing, ingen netværkskald. Alt gemmes kun på din telefon.</li>
@@ -371,7 +370,6 @@ td.pct { color: var(--neon); }
   const opts = {
     sound: store.get('gb:sound') !== '0',
     vibe: store.get('gb:vibe') !== '0',
-    helpful: store.get('gb:helpful') !== '0',
   };
   let S, kb = null, drag = null, shown = 0, fresh = false;
   let best = +store.get('gb:best') || 0;
@@ -389,7 +387,7 @@ td.pct { color: var(--neon); }
   }
 
   function newGame(seed) {
-    S = { seed, rng: hashSeed(seed), grid: Array(N * N).fill(-1), tray: [], score: 0, streak: 0, since: 0, over: false, helpful: opts.helpful, sets: 0 };
+    S = { seed, rng: hashSeed(seed), grid: Array(N * N).fill(-1), tray: [], score: 0, streak: 0, since: 0, over: false, sets: 0 };
     kb = null; shown = 0;
     deal();
     checkOver();
@@ -438,12 +436,20 @@ td.pct { color: var(--neon); }
     }
     return false;
   }
+  // Hvert sæt skal altid kunne lægges på brættet i en eller anden rækkefølge,
+  // også når det kræver, at en rydning først skaber plads.
+  // Først prøves almindelige sæt. Er brættet meget fyldt, trækkes der blandt de små brikker,
+  // og i allersidste ende gives tre prikker, som altid kan lægges.
+  const SMALL = [0, 1, 2, 5];
+  function drawSmall() {
+    const f = SMALL[Math.floor(rand() * SMALL.length)];
+    return { f, o: Math.floor(rand() * FAMILIES[f].orients.length) };
+  }
   function deal() {
-    let set;
-    for (let t = 0; t < 40; t++) {
-      set = [draw(), draw(), draw()];
-      if (!S.helpful || solvable(S.grid, set)) break;
-    }
+    let set = null;
+    for (let t = 0; t < 30 && !set; t++) { const s = [draw(), draw(), draw()]; if (solvable(S.grid, s)) set = s; }
+    for (let t = 0; t < 30 && !set; t++) { const s = [drawSmall(), drawSmall(), drawSmall()]; if (solvable(S.grid, s)) set = s; }
+    if (!set) set = [{ f: 0, o: 0 }, { f: 0, o: 0 }, { f: 0, o: 0 }];
     S.sets = (S.sets || 0) + 1;
     set.forEach((ref, i) => { ref.c = ((S.sets * 3 + i) * 5 + ref.f) % 7; });
     S.tray = set;
@@ -555,9 +561,7 @@ td.pct { color: var(--neon); }
       b.type = 'button'; b.className = 'slot'; b.dataset.i = i;
       if (!ref) { b.disabled = true; b.setAttribute('aria-label', `Plads ${i + 1}: tom`); }
       else {
-        const f = FAMILIES[ref.f], ok = fitsAnywhere(ref, S.grid);
-        b.setAttribute('aria-label', `Brik ${i + 1}: ${f.name}${ok ? '' : ', passer ingen steder'}`);
-        if (!ok) b.classList.add('nofit');
+        b.setAttribute('aria-label', `Brik ${i + 1}: ${FAMILIES[ref.f].name}`);
         if (fresh) b.classList.add('fresh');
         if (kb && kb.i === i) b.classList.add('sel');
         if (drag && drag.i === i) b.classList.add('lifted');
@@ -814,7 +818,7 @@ td.pct { color: var(--neon); }
   on($('menu'), 'click', openSheet);
   on($('close'), 'click', closeSheet);
   on($('sheet'), 'click', e => { if (e.target === $('sheet')) closeSheet(); });
-  [['opt-sound', 'sound'], ['opt-vibe', 'vibe'], ['opt-helpful', 'helpful']].forEach(([id, key]) => {
+  [['opt-sound', 'sound'], ['opt-vibe', 'vibe']].forEach(([id, key]) => {
     $(id).checked = opts[key];
     on($(id), 'change', e => {
       opts[key] = e.target.checked;
@@ -863,7 +867,6 @@ td.pct { color: var(--neon); }
     try { saved = JSON.parse(store.get('gb:game')); } catch {}
     if (valid(saved) && !saved.over) {
       S = saved;
-      if (typeof S.helpful !== 'boolean') S.helpful = true;
       shown = S.score;
       checkOver(); render();
     } else newGame(randomSeed());

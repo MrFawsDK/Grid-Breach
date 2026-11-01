@@ -1,5 +1,5 @@
 // Offline-cache: appen virker uden net, når den først er åbnet én gang.
-const CACHE = 'gridbreach-95dc982e74';
+const CACHE = 'gridbreach-2be799d2b5';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'fonts.css', 'fonts/ChakraPetch-500-latin-ext.woff2', 'fonts/ChakraPetch-500-latin.woff2', 'fonts/ChakraPetch-700-latin-ext.woff2', 'fonts/ChakraPetch-700-latin.woff2', 'fonts/JetBrainsMono-400-latin-ext.woff2', 'fonts/JetBrainsMono-400-latin.woff2', 'fonts/JetBrainsMono-700-latin-ext.woff2', 'fonts/JetBrainsMono-700-latin.woff2'];
 
 self.addEventListener('install', e => {
