@@ -1,6 +1,6 @@
 // Offline-cache: appen virker uden net, når den først er åbnet én gang.
-const CACHE = 'gridbreach-2be799d2b5';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'fonts.css', 'fonts/ChakraPetch-500-latin-ext.woff2', 'fonts/ChakraPetch-500-latin.woff2', 'fonts/ChakraPetch-700-latin-ext.woff2', 'fonts/ChakraPetch-700-latin.woff2', 'fonts/JetBrainsMono-400-latin-ext.woff2', 'fonts/JetBrainsMono-400-latin.woff2', 'fonts/JetBrainsMono-700-latin-ext.woff2', 'fonts/JetBrainsMono-700-latin.woff2'];
+const CACHE = 'gridbreach-166c68046b';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'fonts.css', 'fonts/ChakraPetch-500-latin-ext.woff2', 'fonts/ChakraPetch-500-latin.woff2', 'fonts/ChakraPetch-700-latin-ext.woff2', 'fonts/ChakraPetch-700-latin.woff2', 'fonts/JetBrainsMono-400-latin-ext.woff2', 'fonts/JetBrainsMono-400-latin.woff2', 'fonts/JetBrainsMono-700-latin-ext.woff2', 'fonts/JetBrainsMono-700-latin.woff2', 'art/bay-0.png', 'art/bay-1.png', 'art/bay-2.png', 'art/block-0.png', 'art/block-1.png', 'art/block-2.png', 'art/block-3.png', 'art/block-4.png', 'art/block-5.png', 'art/block-6.png', 'art/frame.png', 'art/logo.png', 'art/socket.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
