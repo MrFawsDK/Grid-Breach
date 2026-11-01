@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../public/fonts.css">
+<style>body { margin: 0; background: #222; } canvas { display: block; margin: 8px; }</style>
+</head>
+<body>
+<script>
+// Tegner al grafik til spillet. tools/render-art.mjs gemmer resultatet som PNG i public/art/.
+const COLORS = ['#39ff88', '#19e6ff', '#ff2bd6', '#f2ff3a', '#ff8a1f', '#ff3355', '#9d6bff'];
+const out = {};
+
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; document.body.appendChild(c); return c; }
+function rgb(hex) { const n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function shade(hex, amt, alpha = 1) {
+  const [r, g, b] = rgb(hex), t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+  return `rgba(${Math.round(r + (t - r) * p)},${Math.round(g + (t - g) * p)},${Math.round(b + (t - b) * p)},${alpha})`;
+}
+function rr(x, X, Y, W, H, r, keep) {
+  if (!keep) x.beginPath();
+  x.moveTo(X + r, Y); x.arcTo(X + W, Y, X + W, Y + H, r); x.arcTo(X + W, Y + H, X, Y + H, r);
+  x.arcTo(X, Y + H, X, Y, r); x.arcTo(X, Y, X + W, Y, r); x.closePath();
+}
+function poly(x, pts, fill) { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); x.fillStyle = fill; x.fill(); }
+function chamfer(x, X, Y, W, H, c) { x.beginPath(); x.moveTo(X + c, Y); x.lineTo(X + W - c, Y); x.lineTo(X + W, Y + c); x.lineTo(X + W, Y + H - c); x.lineTo(X + W - c, Y + H); x.lineTo(X + c, Y + H); x.lineTo(X, Y + H - c); x.lineTo(X, Y + c); x.closePath(); }
+function screw(x, cx, cy, r) {
+  const g = x.createRadialGradient(cx - r / 3, cy - r / 3, 1, cx, cy, r);
+  g.addColorStop(0, '#6f8597'); g.addColorStop(1, '#1b2833');
+  x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fillStyle = g; x.fill();
+  x.strokeStyle = '#0a1016'; x.lineWidth = 2; x.stroke();
+  x.beginPath(); x.moveTo(cx - r * .6, cy + r * .3); x.lineTo(cx + r * .6, cy - r * .3); x.lineWidth = 2.5; x.stroke();
+}
+
+// ---- Blok: facetteret 3D-klods med kredsløb og en glødende chip ----
+function block(color) {
+  const S = 128, c = mk(S, S), x = c.getContext('2d'), b = 15, m = 2, R = 14;
+  rr(x, m, m, S - 2 * m, S - 2 * m, R); x.fillStyle = shade(color, -.6); x.fill();
+  x.save(); rr(x, m, m, S - 2 * m, S - 2 * m, R); x.clip();
+  poly(x, [[0, 0], [S, 0], [S - b, b], [b, b]], shade(color, .5));
+  poly(x, [[0, 0], [b, b], [b, S - b], [0, S]], shade(color, .22));
+  poly(x, [[S, 0], [S, S], [S - b, S - b], [S - b, b]], shade(color, -.32));
+  poly(x, [[0, S], [b, S - b], [S - b, S - b], [S, S]], shade(color, -.55));
+  const g = x.createLinearGradient(0, b, 0, S - b);
+  g.addColorStop(0, shade(color, .12)); g.addColorStop(1, shade(color, -.3));
+  x.fillStyle = g; x.fillRect(b, b, S - 2 * b, S - 2 * b);
+  // kredsløbsspor
+  x.strokeStyle = 'rgba(255,255,255,.3)'; x.lineWidth = 2.5; x.lineCap = 'round'; x.lineJoin = 'round';
+  const traces = [[[b + 4, 40], [38, 40], [48, 50]], [[b + 4, 88], [34, 88], [48, 74]], [[S - b - 4, 34], [92, 34], [80, 48]], [[S - b - 4, 94], [90, 94], [80, 82]], [[64, b + 4], [64, 46]], [[64, S - b - 4], [64, 82]]];
+  traces.forEach(t => { x.beginPath(); t.forEach(([a, q], i) => i ? x.lineTo(a, q) : x.moveTo(a, q)); x.stroke(); const [ex, ey] = t[0]; x.beginPath(); x.arc(ex, ey, 3.2, 0, 7); x.fillStyle = 'rgba(255,255,255,.45)'; x.fill(); });
+  // chip
+  x.fillStyle = shade(color, -.7); x.fillRect(46, 46, 36, 36);
+  x.strokeStyle = shade(color, .55, .9); x.lineWidth = 2; x.strokeRect(46, 46, 36, 36);
+  const core = x.createRadialGradient(64, 64, 1, 64, 64, 16);
+  core.addColorStop(0, '#ffffff'); core.addColorStop(.35, shade(color, .4)); core.addColorStop(1, shade(color, -.2, 0));
+  x.fillStyle = core; x.fillRect(48, 48, 32, 32);
+  // glans
+  const gl = x.createRadialGradient(36, 26, 2, 36, 26, 70);
+  gl.addColorStop(0, 'rgba(255,255,255,.55)'); gl.addColorStop(.5, 'rgba(255,255,255,.08)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gl; x.fillRect(0, 0, S, S);
+  x.restore();
+  rr(x, m, m, S - 2 * m, S - 2 * m, R); x.strokeStyle = 'rgba(0,0,0,.55)'; x.lineWidth = 2; x.stroke();
+  rr(x, m + 2, m + 2, S - 2 * m - 4, S - 2 * m - 4, R - 2); x.strokeStyle = shade(color, .7, .35); x.lineWidth = 1.5; x.stroke();
+  return c;
+}
+
+// ---- Tomt felt: forsænket sokkel ----
+function socket() {
+  const S = 128, c = mk(S, S), x = c.getContext('2d');
+  rr(x, 3, 3, S - 6, S - 6, 12);
+  const g = x.createLinearGradient(0, 0, 0, S); g.addColorStop(0, '#04080c'); g.addColorStop(1, '#0d1a23');
+  x.fillStyle = g; x.fill();
+  x.save(); rr(x, 3, 3, S - 6, S - 6, 12); x.clip();
+  x.strokeStyle = 'rgba(57,255,136,.05)'; x.lineWidth = 2;
+  for (let i = -S; i < S; i += 12) { x.beginPath(); x.moveTo(i, S); x.lineTo(i + S, 0); x.stroke(); }
+  x.shadowColor = 'rgba(0,0,0,.9)'; x.shadowBlur = 16; x.shadowOffsetY = 6;
+  x.beginPath(); x.rect(-20, -20, S + 40, S + 40); rr(x, 3, 3, S - 6, S - 6, 12, true); x.fillStyle = '#000'; x.fill('evenodd');
+  x.restore();
+  rr(x, 3, 3, S - 6, S - 6, 12); x.strokeStyle = '#163845'; x.lineWidth = 2.5; x.stroke();
+  [[16, 16], [S - 16, 16], [16, S - 16], [S - 16, S - 16]].forEach(([a, q]) => { x.beginPath(); x.arc(a, q, 3, 0, 7); x.fillStyle = '#1e5262'; x.fill(); });
+  x.strokeStyle = 'rgba(57,255,136,.12)'; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(56, 64); x.lineTo(72, 64); x.moveTo(64, 56); x.lineTo(64, 72); x.stroke();
+  return c;
+}
+
+// ---- Ramme om brættet (midten er gennemsigtig) ----
+function frame() {
+  const S = 1200, IN = 60, c = mk(S, S), x = c.getContext('2d');
+  chamfer(x, 0, 0, S, S, 70);
+  const g = x.createLinearGradient(0, 0, S, S);
+  g.addColorStop(0, '#2a3a48'); g.addColorStop(.25, '#121d27'); g.addColorStop(.5, '#1d2b37'); g.addColorStop(.75, '#0e171f'); g.addColorStop(1, '#22313e');
+  x.fillStyle = g; x.fill();
+  // børstet metal
+  x.save(); chamfer(x, 0, 0, S, S, 70); x.clip();
+  for (let i = 0; i < 1400; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * .025})`; x.fillRect(Math.random() * S, Math.random() * S, 40 + Math.random() * 120, 1); }
+  x.restore();
+  chamfer(x, 3, 3, S - 6, S - 6, 68); x.strokeStyle = 'rgba(160,200,220,.35)'; x.lineWidth = 3; x.stroke();
+  chamfer(x, 10, 10, S - 20, S - 20, 64); x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = 3; x.stroke();
+  // advarselsstriber
+  [[S / 2 - 150, 18], [S / 2 - 150, S - 36]].forEach(([X, Y]) => {
+    x.save(); x.beginPath(); x.rect(X, Y, 300, 18); x.clip();
+    x.fillStyle = '#111'; x.fillRect(X, Y, 300, 18);
+    x.fillStyle = '#e6c21a'; for (let i = -20; i < 320; i += 28) { x.beginPath(); x.moveTo(X + i, Y + 18); x.lineTo(X + i + 14, Y + 18); x.lineTo(X + i + 32, Y); x.lineTo(X + i + 18, Y); x.closePath(); x.fill(); }
+    x.restore();
+  });
+  // neonstriber i siderne
+  x.shadowBlur = 24;
+  [['#19e6ff', 18, S / 2 - 160], ['#19e6ff', S - 26, S / 2 - 160]].forEach(([col, X, Y]) => { x.shadowColor = col; x.fillStyle = col; x.fillRect(X, Y, 8, 320); });
+  x.shadowBlur = 0;
+  // tekst
+  x.font = '700 22px "JetBrains Mono"'; x.fillStyle = '#6f9c8b';
+  x.fillText('SEC-07 // NODE 8x8', 96, 42);
+  x.textAlign = 'right'; x.fillText('FAIR_RNG ▲ ONLINE', S - 96, S - 20);
+  x.textAlign = 'left'; x.fillStyle = '#4a6b60'; x.fillText('0x1F40', 96, S - 20);
+  // status-LED'er
+  ['#39ff88', '#39ff88', '#f2ff3a', '#ff3355'].forEach((col, i) => {
+    x.shadowColor = col; x.shadowBlur = 14; x.beginPath(); x.arc(S - 110 - i * 26, 33, 7, 0, 7); x.fillStyle = col; x.fill();
+  });
+  x.shadowBlur = 0;
+  [[40, 40], [S - 40, 40], [40, S - 40], [S - 40, S - 40]].forEach(([a, q]) => screw(x, a + (a < S / 2 ? 30 : -30) * 0, q, 13));
+  // indre kant med neon
+  x.fillStyle = '#03060a'; x.fillRect(IN - 16, IN - 16, S - 2 * IN + 32, S - 2 * IN + 32);
+  x.shadowColor = '#39ff88'; x.shadowBlur = 22; x.strokeStyle = '#39ff88'; x.lineWidth = 4;
+  x.strokeRect(IN - 8, IN - 8, S - 2 * IN + 16, S - 2 * IN + 16);
+  x.shadowBlur = 0;
+  // hjørnebeslag
+  x.strokeStyle = '#b8ffd6'; x.lineWidth = 6; x.lineCap = 'square';
+  [[IN - 8, IN - 8, 1, 1], [S - IN + 8, IN - 8, -1, 1], [IN - 8, S - IN + 8, 1, -1], [S - IN + 8, S - IN + 8, -1, -1]].forEach(([a, q, dx, dy]) => {
+    x.beginPath(); x.moveTo(a, q + dy * 60); x.lineTo(a, q); x.lineTo(a + dx * 60, q); x.stroke();
+  });
+  x.clearRect(IN, IN, S - 2 * IN, S - 2 * IN);
+  return c;
+}
+
+// ---- Bakke-plads ----
+function bay(n) {
+  const W = 360, H = 300, c = mk(W, H), x = c.getContext('2d');
+  chamfer(x, 4, 4, W - 8, H - 8, 26);
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#16222d'); g.addColorStop(1, '#0a1118');
+  x.fillStyle = g; x.fill();
+  x.strokeStyle = 'rgba(160,200,220,.28)'; x.lineWidth = 3; x.stroke();
+  chamfer(x, 22, 40, W - 44, H - 62, 16);
+  const g2 = x.createLinearGradient(0, 40, 0, H); g2.addColorStop(0, '#03070b'); g2.addColorStop(1, '#0a161e');
+  x.fillStyle = g2; x.fill();
+  x.strokeStyle = '#12303b'; x.lineWidth = 2; x.stroke();
+  x.font = '700 20px "JetBrains Mono"'; x.fillStyle = '#5d8b7b'; x.fillText(`BAY-0${n + 1}`, 26, 29);
+  x.shadowColor = '#39ff88'; x.shadowBlur = 10; x.fillStyle = '#39ff88'; x.beginPath(); x.arc(W - 34, 22, 5, 0, 7); x.fill();
+  x.shadowBlur = 0;
+  x.fillStyle = '#e6c21a'; x.fillRect(W - 110, 18, 54, 8);
+  return c;
+}
+
+// ---- Logo ----
+function logo() {
+  const W = 1000, H = 190, c = mk(W, H), x = c.getContext('2d');
+  x.font = '700 128px "Chakra Petch"'; x.textBaseline = 'alphabetic';
+  const parts = [['GRID', 'chrome'], ['//', '#39ff88'], ['BREACH', 'chrome']];
+  const widths = parts.map(([t]) => x.measureText(t).width), total = widths.reduce((a, b) => a + b, 0);
+  const sc = Math.min(1, (W - 40) / total); x.setTransform(sc, 0, 0, sc, 20, 0);
+  const Y = 140;
+  const drawAll = (fn) => { let X = 0; parts.forEach((p, i) => { fn(p, X); X += widths[i]; }); };
+  x.globalCompositeOperation = 'lighter';
+  x.globalAlpha = .75; x.fillStyle = '#ff2bd6'; drawAll(([t], X) => x.fillText(t, X - 6, Y));
+  x.fillStyle = '#19e6ff'; drawAll(([t], X) => x.fillText(t, X + 6, Y));
+  x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+  const chrome = x.createLinearGradient(0, 40, 0, Y + 10);
+  chrome.addColorStop(0, '#ffffff'); chrome.addColorStop(.45, '#b9cad8'); chrome.addColorStop(.5, '#4e6578'); chrome.addColorStop(.7, '#dfe9f2'); chrome.addColorStop(1, '#8aa1b4');
+  x.shadowColor = 'rgba(57,255,136,.6)'; x.shadowBlur = 24;
+  drawAll(([t, s], X) => { x.fillStyle = s === 'chrome' ? chrome : s; x.fillText(t, X, Y); });
+  x.shadowBlur = 0; x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,.5)';
+  drawAll(([t], X) => x.strokeText(t, X, Y));
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  // glitch-skiver
+  [[66, 6, 7], [118, 4, -5]].forEach(([y, h, dx]) => { const d = x.getImageData(0, y, W, h); x.clearRect(0, y, W, h); x.putImageData(d, dx, y); });
+  return c;
+}
+
+document.fonts.load('700 128px "Chakra Petch"').then(() => document.fonts.load('700 22px "JetBrains Mono"')).then(() => {
+  COLORS.forEach((col, i) => { out[`block-${i}`] = block(col).toDataURL(); });
+  out.socket = socket().toDataURL();
+  out.frame = frame().toDataURL();
+  [0, 1, 2].forEach(n => { out[`bay-${n}`] = bay(n).toDataURL(); });
+  out.logo = logo().toDataURL();
+  window.ART = out;
+});
+</script>
+</body>
+</html>

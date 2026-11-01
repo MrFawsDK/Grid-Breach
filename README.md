@@ -7,6 +7,7 @@ Jeg lavede det, fordi jeg var træt af blokspil med reklamer efter hvert andet s
 ## Hvad der er i det
 
 - 8×8-bræt og tre brikker ad gangen
+- 3D-klodser, metalramme og en neon-by i baggrunden
 - Glidende træk: brikken løftes op over fingeren og snapper på plads
 - Chains, når du rydder flere gange i træk
 - BREACH, HACKED, ROOT ACCESS og SYSTEM PWNED, når det går godt
@@ -39,6 +40,8 @@ De tre brikker du får, kan altid lægges på brættet på en eller anden måde.
 ## Byg det selv
 
 Hele spillet ligger i `game.html`. Ikoner og skrifttyper ligger i `public/`.
+
+Grafikken (klodser, ramme, logo osv.) bliver tegnet af `tools/art.html`. Vil du ændre farver eller former, så ret der og kør `node tools/render-art.mjs`. Så bliver PNG'erne i `public/art/` lavet igen. Det kræver Firefox.
 
 ```bash
 npm install

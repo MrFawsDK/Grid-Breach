@@ -36,7 +36,7 @@ ${game}
 writeFileSync(new URL('index.html', out), index);
 
 const version = createHash('sha256').update(index).digest('hex').slice(0, 10);
-const fonts = readdirSync(new URL('public/fonts/', root)).map(f => 'fonts/' + f);
+const fonts = ['fonts', 'art'].flatMap(d => readdirSync(new URL(`public/${d}/`, root)).map(f => `${d}/${f}`));
 const sw = readFileSync(new URL('tools/sw.template.js', root), 'utf8')
   .replace('__VERSION__', version)
   .replace("'apple-touch-icon.png']", `'apple-touch-icon.png', 'fonts.css', ${fonts.map(f => `'${f}'`).join(', ')}]`);

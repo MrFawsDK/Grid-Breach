@@ -9,6 +9,8 @@
   --bg: #04070a; --panel: #081017; --cell: #0b151d; --grid: #12303b; --fg: #d6fbe7; --muted: #5d8b7b;
   --neon: #39ff88; --cyan: #19e6ff; --mag: #ff2bd6; --danger: #ff3355; --on-neon: #02130a;
   --t0: #39ff88; --t1: #19e6ff; --t2: #ff2bd6; --t3: #f2ff3a; --t4: #ff8a1f; --t5: #ff3355; --t6: #9d6bff;
+  --b0: url(art/block-0.png); --b1: url(art/block-1.png); --b2: url(art/block-2.png); --b3: url(art/block-3.png);
+  --b4: url(art/block-4.png); --b5: url(art/block-5.png); --b6: url(art/block-6.png);
   --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -17,8 +19,8 @@ body {
   background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: 14px;
   -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
 }
-#rain, #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-#rain { z-index: 0; opacity: .55; }
+#bg, #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#bg { z-index: 0; }
 #fx { z-index: 40; }
 .scan {
   position: fixed; inset: 0; pointer-events: none; z-index: 45;
@@ -26,26 +28,20 @@ body {
   mix-blend-mode: multiply;
 }
 .app {
-  --bw: min(calc(100vw - 32px), calc((100vh - 250px) / 1.36), 480px);
-  --bw: min(calc(100vw - 32px), calc((100dvh - 250px) / 1.36), 480px);
+  --bw: min(calc((100vw - 32px) / 1.12), calc((100vh - 240px) / 1.52), 430px);
+  --bw: min(calc((100vw - 32px) / 1.12), calc((100dvh - 240px) / 1.52), 430px);
+  --fw: calc(var(--bw) * 1.112);
   position: relative; z-index: 1; height: 100%; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   padding-block: 10px 14px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.top { width: var(--bw); display: flex; align-items: center; gap: 12px; }
+.top { width: var(--fw); display: flex; align-items: center; gap: 12px; }
 .brand { flex: 1; min-width: 0; }
-h1 {
-  position: relative; margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.45rem; line-height: 1;
-  letter-spacing: .04em; color: var(--fg); text-shadow: 0 0 10px color-mix(in srgb, var(--neon) 50%, transparent);
-}
-h1 span { color: var(--neon); }
-h1::before, h1::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: .8; }
-h1::before { color: var(--mag); animation: glitchA 5s infinite steps(1); }
-h1::after { color: var(--cyan); animation: glitchB 5s infinite steps(1); }
-@keyframes glitchA { 0%, 91%, 100% { clip-path: inset(0 0 100% 0); translate: 0; } 92% { clip-path: inset(20% 0 50% 0); translate: -3px 0; } 94% { clip-path: inset(60% 0 10% 0); translate: 2px 0; } 96% { clip-path: inset(0 0 100% 0); } }
-@keyframes glitchB { 0%, 92%, 100% { clip-path: inset(0 0 100% 0); translate: 0; } 93% { clip-path: inset(50% 0 20% 0); translate: 3px 0; } 95% { clip-path: inset(10% 0 70% 0); translate: -2px 0; } 97% { clip-path: inset(0 0 100% 0); } }
+h1 { margin: 0; line-height: 0; }
+.logo { display: block; height: clamp(24px, 7.2vw, 36px); width: auto; animation: logoGlitch 6s steps(1) infinite; }
+@keyframes logoGlitch { 0%, 93%, 100% { transform: none; filter: none; } 94% { transform: translateX(3px) skewX(-10deg); filter: hue-rotate(80deg); } 96% { transform: translateX(-3px); filter: hue-rotate(-60deg) brightness(1.4); } 97% { transform: none; filter: none; } }
 .sess { margin-top: 5px; font-size: .68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sess b { color: var(--cyan); font-weight: 400; letter-spacing: .08em; }
 .scores { display: flex; gap: 14px; }
@@ -59,37 +55,36 @@ h1::after { color: var(--cyan); animation: glitchB 5s infinite steps(1); }
 }
 .icon svg { width: 20px; height: 20px; }
 
-.status { width: var(--bw); font-size: .74rem; color: var(--muted); min-height: 1.3em; display: flex; justify-content: space-between; gap: 8px; }
+.status { width: var(--fw); font-size: .74rem; color: var(--muted); min-height: 1.3em; display: flex; justify-content: space-between; gap: 8px; }
 .status b { color: var(--mag); font-weight: 700; text-shadow: 0 0 8px color-mix(in srgb, var(--mag) 60%, transparent); }
 .status .cursor::after { content: "_"; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-.board-wrap { position: relative; width: var(--bw); }
+.board-wrap { position: relative; width: var(--bw); margin-block: calc(var(--bw) * .06); }
+.frame { position: absolute; inset: -5.56%; z-index: 2; pointer-events: none; background: url(art/frame.png) center / 100% 100% no-repeat; }
 .board-wrap.shake { animation: shake .35s; }
 @keyframes shake { 20% { translate: -6px 2px; } 40% { translate: 5px -3px; } 60% { translate: -3px 2px; } 80% { translate: 2px 0; } }
 .board {
-  display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 8px; box-sizing: border-box; aspect-ratio: 1;
-  background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--grid); border-radius: 6px;
-  box-shadow: 0 0 30px color-mix(in srgb, var(--neon) 10%, transparent), inset 0 0 40px rgba(0,0,0,.6);
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; padding: 4px; box-sizing: border-box; aspect-ratio: 1;
+  background: #03060a;
   touch-action: none;
 }
-.cn { position: absolute; width: 16px; height: 16px; border: 2px solid var(--neon); pointer-events: none; filter: drop-shadow(0 0 4px var(--neon)); }
-.cn.tl { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
-.cn.tr { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
-.cn.bl { bottom: -5px; left: -5px; border-right: 0; border-top: 0; }
-.cn.br { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
-.cell { border-radius: 3px; background: var(--cell); box-shadow: inset 0 0 0 1px var(--grid); }
-.cell.f, .cell.ghost, .cell.hl, .drag i, .mini i {
-  background: radial-gradient(circle, var(--c) 0 17%, transparent 19%), linear-gradient(135deg, color-mix(in srgb, var(--c) 34%, var(--cell)), color-mix(in srgb, var(--c) 14%, var(--cell)));
-  box-shadow: inset 0 0 0 1.5px var(--c), 0 0 9px color-mix(in srgb, var(--c) 55%, transparent);
-}
+.cell { background: url(art/socket.png) center / 100% 100% no-repeat; }
+.cell.f, .cell.ghost, .cell.hl, .drag i, .mini i { background: var(--bi) center / 100% 100% no-repeat; }
 .cell.ghost { opacity: .4; }
-.cell.bad { box-shadow: inset 0 0 0 2px var(--danger); }
-.cell.hl { --c: var(--hc); background: var(--hc); box-shadow: 0 0 14px var(--hc), inset 0 0 0 1px #ffffff; opacity: 1; z-index: 1; }
+.cell.bad { box-shadow: inset 0 0 0 2px var(--danger); border-radius: 6px; }
+.cell.hl { background-image: var(--hbi); opacity: 1; z-index: 1; filter: brightness(1.3) drop-shadow(0 0 5px var(--hc)); animation: pulse .5s ease-in-out infinite alternate; }
+@keyframes pulse { to { filter: brightness(1.75) drop-shadow(0 0 10px var(--hc)); } }
 .cell.land { animation: land .2s ease-out; }
 @keyframes land { from { transform: scale(1.2); filter: brightness(2); } }
 .cell.clearing { animation: blast .36s ease-in forwards; }
-@keyframes blast { 20% { background: #ffffff; transform: scale(1.15); } to { transform: scale(.1) rotate(45deg); opacity: 0; } }
+@keyframes blast { 20% { filter: brightness(2.6); transform: scale(1.15); } to { transform: scale(.1) rotate(45deg); opacity: 0; } }
+.laser { position: absolute; z-index: 4; pointer-events: none; border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #ffffff 30%, #ffffff 70%, transparent); box-shadow: 0 0 16px 5px var(--lc), 0 0 40px 10px var(--lc);
+  animation: laser .42s ease-out forwards; }
+.laser.v { background: linear-gradient(180deg, transparent, #ffffff 30%, #ffffff 70%, transparent); animation-name: laserV; }
+@keyframes laser { from { transform: scaleX(0); } 55% { transform: scaleX(1); opacity: 1; } to { transform: scaleX(1.05) scaleY(.15); opacity: 0; } }
+@keyframes laserV { from { transform: scaleY(0); } 55% { transform: scaleY(1); opacity: 1; } to { transform: scaleY(1.05) scaleX(.15); opacity: 0; } }
 .board.dead .cell.f { filter: grayscale(1) brightness(.35); transition: filter .3s; transition-delay: var(--d); }
 
 .pop {
@@ -115,14 +110,16 @@ h1::after { color: var(--cyan); animation: glitchB 5s infinite steps(1); }
 .over .final { font-family: var(--display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--neon); text-shadow: 0 0 18px color-mix(in srgb, var(--neon) 60%, transparent); }
 .over .rec { color: var(--mag); font-weight: 700; letter-spacing: .1em; }
 
-.payload { width: var(--bw); display: flex; justify-content: space-between; font-size: .64rem; letter-spacing: .14em; color: var(--muted); margin-bottom: -4px; }
-.tray { width: var(--bw); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; aspect-ratio: 3 / 1.2; touch-action: none; }
+.tray { width: var(--fw); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; aspect-ratio: 3 / .87; touch-action: none; }
 .slot {
-  display: grid; place-items: center; padding: 0; min-width: 0; cursor: grab; color: inherit; font: inherit;
-  background: color-mix(in srgb, var(--panel) 70%, transparent); border: 1px solid var(--grid); border-radius: 6px;
+  display: grid; place-items: center; padding: 10% 0 0; min-width: 0; cursor: grab; color: inherit; font: inherit;
+  background: var(--bay) center / 100% 100% no-repeat; border: 0; border-radius: 0;
 }
+.slot:nth-child(1) { --bay: url(art/bay-0.png); }
+.slot:nth-child(2) { --bay: url(art/bay-1.png); }
+.slot:nth-child(3) { --bay: url(art/bay-2.png); }
 .slot:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
-.slot.sel { border-color: var(--neon); box-shadow: 0 0 12px color-mix(in srgb, var(--neon) 35%, transparent); }
+.slot.sel { filter: drop-shadow(0 0 8px var(--neon)); }
 .slot.lifted .mini { opacity: 0; }
 .slot.fresh .mini { animation: deal .3s ease-out both; }
 .slot.fresh:nth-child(2) .mini { animation-delay: .06s; }
@@ -176,21 +173,21 @@ td.pct, th.pct { text-align: right; font-variant-numeric: tabular-nums; }
 td.pct { color: var(--neon); }
 
 @media (prefers-reduced-motion: reduce) {
-  h1::before, h1::after, .status .cursor::after { animation: none; }
+  .logo, .status .cursor::after, .cell.hl { animation: none; }
   .cell.clearing { animation-duration: .01s; }
   .cell.land, .slot.fresh .mini, .board-wrap.shake, .sheet .panel { animation: none; }
   .pop { animation: rise .01s forwards; }
 }
 </style>
 
-<canvas id="rain" aria-hidden="true"></canvas>
+<canvas id="bg" aria-hidden="true"></canvas>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="scan" aria-hidden="true"></div>
 
 <div class="app">
   <header class="top">
     <div class="brand">
-      <h1 data-text="GRID//BREACH">GRID<span>//</span>BREACH</h1>
+      <h1><img class="logo" src="art/logo.png" alt="GRID//BREACH" width="1000" height="190"></h1>
       <div class="sess">&gt; seed <b id="seedcode">------</b> · fair_rng</div>
     </div>
     <div class="scores">
@@ -206,7 +203,7 @@ td.pct { color: var(--neon); }
 
   <div class="board-wrap" id="wrap">
     <div class="board" id="board" aria-label="Spillebræt, 8 gange 8 felter"></div>
-    <span class="cn tl"></span><span class="cn tr"></span><span class="cn bl"></span><span class="cn br"></span>
+    <div class="frame" aria-hidden="true"></div>
     <div class="over" id="over" hidden>
       <h2>CONNECTION LOST</h2>
       <div class="log">&gt; ingen payload passer<br>&gt; trace fuldført</div>
@@ -219,7 +216,6 @@ td.pct { color: var(--neon); }
     </div>
   </div>
 
-  <div class="payload" aria-hidden="true"><span>&gt; PAYLOAD</span><span id="setno">SET 1</span></div>
   <div class="tray" id="tray" aria-label="Brikker. Træk en brik ind på brættet, eller vælg med 1, 2, 3 og flyt med piletasterne."></div>
 </div>
 
@@ -382,16 +378,16 @@ td.pct { color: var(--neon); }
 
   // ---- Regler ----
   function fullLines(g) {
-    const set = new Set(); let n = 0;
+    const set = new Set(), rows = [], cols = []; let n = 0;
     for (let r = 0; r < N; r++) {
       let full = true; for (let c = 0; c < N; c++) if (g[r * N + c] < 0) { full = false; break; }
-      if (full) { n++; for (let c = 0; c < N; c++) set.add(r * N + c); }
+      if (full) { n++; rows.push(r); for (let c = 0; c < N; c++) set.add(r * N + c); }
     }
     for (let c = 0; c < N; c++) {
       let full = true; for (let r = 0; r < N; r++) if (g[r * N + c] < 0) { full = false; break; }
-      if (full) { n++; for (let r = 0; r < N; r++) set.add(r * N + c); }
+      if (full) { n++; cols.push(c); for (let r = 0; r < N; r++) set.add(r * N + c); }
     }
-    return { set, n };
+    return { set, n, rows, cols };
   }
   function fitsOn(g, p, r, c) {
     for (const [y, x] of p.cells) {
@@ -461,7 +457,7 @@ td.pct { color: var(--neon); }
     const placed = p.cells.map(([y, x]) => (r + y) * N + c + x);
     placed.forEach(k => { S.grid[k] = col; });
     let gained = p.cells.length, praise = '';
-    const { set, n } = fullLines(S.grid);
+    const { set, n, rows, cols } = fullLines(S.grid);
     const old = new Map();
     if (n) {
       S.streak++; S.since = 0;
@@ -486,10 +482,11 @@ td.pct { color: var(--neon); }
     if (old.size) {
       old.forEach((v, k) => {
         cellEls[k].className = 'cell f clearing';
-        cellEls[k].style.setProperty('--c', `var(--t${v})`);
+        paint(cellEls[k], v);
         const b = cellEls[k].getBoundingClientRect();
         burst(b.left + b.width / 2, b.top + b.height / 2, COLORS[v], n > 1 ? 6 : 4);
       });
+      lasers(rows, cols, col);
       setTimeout(() => { if (!drag) renderBoard(kbPreview()); }, 380);
       const lineScore = gained - p.cells.length;
       if (praise) showPop(praise, `+${lineScore}`);
@@ -506,7 +503,7 @@ td.pct { color: var(--neon); }
 
   // ---- Visning ----
   function renderBoard(pv) {
-    if (pv) boardEl.style.setProperty('--hc', `var(--t${pv.color})`);
+    if (pv) { boardEl.style.setProperty('--hc', `var(--t${pv.color})`); boardEl.style.setProperty('--hbi', `var(--b${pv.color})`); }
     boardEl.classList.toggle('dead', S.over);
     for (let k = 0; k < N * N; k++) {
       const v = S.grid[k], el = cellEls[k];
@@ -515,8 +512,30 @@ td.pct { color: var(--neon); }
       if (pv && pv.cells.has(k)) { cls += pv.ok ? ' ghost' : ' bad'; if (v < 0 && pv.ok) c = pv.color; }
       if (pv && pv.lines.has(k)) cls += ' hl';
       el.className = cls;
-      if (c >= 0) el.style.setProperty('--c', `var(--t${c})`); else el.style.removeProperty('--c');
+      paint(el, c);
     }
+  }
+  function paint(el, c) {
+    if (c >= 0) { el.style.setProperty('--c', `var(--t${c})`); el.style.setProperty('--bi', `var(--b${c})`); }
+    else { el.style.removeProperty('--c'); el.style.removeProperty('--bi'); }
+  }
+  // Laserstråle hen over hver linje, der bliver ryddet
+  function lasers(rows, cols, color) {
+    if (reduced) return;
+    const m = metrics(), w = wrapEl.getBoundingClientRect(), len = N * m.pitch - m.gap;
+    const add = (v, i) => {
+      const el = document.createElement('div');
+      el.className = v ? 'laser v' : 'laser';
+      el.style.setProperty('--lc', COLORS[color]);
+      const t = m.cell * .5, o = i * m.pitch + (m.cell - t) / 2;
+      el.style.cssText += v
+        ? `left:${m.ox - w.left + o}px;top:${m.oy - w.top}px;width:${t}px;height:${len}px`
+        : `left:${m.ox - w.left}px;top:${m.oy - w.top + o}px;width:${len}px;height:${t}px`;
+      wrapEl.appendChild(el);
+      setTimeout(() => el.remove(), 450);
+    };
+    rows.forEach(r => add(false, r));
+    cols.forEach(c => add(true, c));
   }
   function metrics() {
     const a = cellEls[0].getBoundingClientRect(), b = cellEls[1].getBoundingClientRect();
@@ -529,7 +548,7 @@ td.pct { color: var(--neon); }
     const step = size + gap;
     el.style.width = p.w * step - gap + 'px';
     el.style.height = p.h * step - gap + 'px';
-    el.style.setProperty('--c', `var(--t${color})`);
+    paint(el, color);
     for (const [y, x] of p.cells) {
       const i = document.createElement('i');
       i.style.cssText = `left:${x * step}px;top:${y * step}px;width:${size}px;height:${size}px`;
@@ -571,7 +590,6 @@ td.pct { color: var(--neon); }
     $('best').textContent = best;
     $('seedcode').textContent = S.seed;
     $('seedcode2').textContent = S.seed;
-    $('setno').textContent = `SET ${S.sets || 1}`;
     $('combo').innerHTML = S.streak > 0
       ? `<span><b>CHAIN ×${S.streak}</b></span><span>${3 - S.since} træk tilbage</span>`
       : '<span class="cursor">&gt; ryd en linje for at starte en chain</span>';
@@ -622,32 +640,88 @@ td.pct { color: var(--neon); }
     else { fxRunning = false; ctx.clearRect(0, 0, innerWidth, innerHeight); }
   }
 
-  // ---- Baggrund: langsom hex-regn ----
-  const rain = $('rain'), rctx = rain.getContext('2d');
-  let drops = [], lastRain = 0;
-  function sizeRain() {
-    sizeCanvas(rain, rctx);
-    drops = Array.from({ length: Math.ceil(innerWidth / 18) }, () => Math.random() * innerHeight / 18);
-    rctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#04070a';
-    rctx.fillRect(0, 0, innerWidth, innerHeight);
+  // ---- Baggrund: neon-gulv i 3D og en by i horisonten (WebGL) ----
+  const FRAG = `precision mediump float;
+uniform vec2 R; uniform float T;
+float h1(float n) { return fract(sin(n) * 43758.5453); }
+void main() {
+  vec2 uv = gl_FragCoord.xy / R;
+  float asp = R.x / R.y;
+  vec3 col = mix(vec3(0.004, 0.008, 0.016), vec3(0.035, 0.012, 0.07), smoothstep(0.2, 1.0, uv.y));
+  float hz = 0.3;
+  col += vec3(0.6, 0.05, 0.5) * 0.28 * exp(-abs(uv.y - hz) * 16.0);
+  if (uv.y < hz) {
+    float z = 0.08 / (hz - uv.y);
+    float gx = abs(fract((uv.x - 0.5) * asp * z * 3.0) - 0.5);
+    float gz = abs(fract(z * 3.0 + T * 1.3) - 0.5);
+    float w = 0.03 + 0.02 * z;
+    float line = max(smoothstep(w, 0.0, gx), smoothstep(w, 0.0, gz));
+    float fade = exp(-z * 0.35);
+    col += vec3(0.1, 1.0, 0.55) * line * fade * 0.55 + vec3(0.03, 0.2, 0.16) * fade * 0.1;
+  } else {
+    for (int L = 0; L < 2; L++) {
+      float fl = 1.0 - float(L);
+      float sc = 9.0 + fl * 9.0;
+      float xi = floor(uv.x * asp * sc + fl * 7.3);
+      float bh = hz + 0.04 + h1(xi * 1.7 + fl * 13.0) * (0.22 - fl * 0.09);
+      if (uv.y < bh) {
+        vec3 b = mix(vec3(0.02, 0.035, 0.06), vec3(0.008, 0.012, 0.022), fl);
+        vec2 wv = vec2(uv.x * asp * sc * 5.0, uv.y * (80.0 + fl * 40.0));
+        vec2 wc = floor(wv), wf = fract(wv);
+        float lit = step(0.82, h1(dot(wc, vec2(12.9, 78.2)) + fl));
+        float flick = 0.6 + 0.4 * sin(T * 2.0 + wc.x * 3.1 + wc.y);
+        float win = lit * step(0.25, wf.x) * step(wf.x, 0.75) * step(0.3, wf.y) * step(wf.y, 0.7);
+        b += mix(vec3(0.1, 1.0, 0.6), vec3(0.1, 0.85, 1.0), h1(wc.x)) * win * flick * (0.55 - fl * 0.25);
+        b += vec3(0.1, 0.9, 0.6) * 0.5 * smoothstep(0.004, 0.0, bh - uv.y) * (1.0 - fl * 0.6);
+        col = b;
+      }
+    }
   }
-  function tickRain(t) {
-    if (ac.signal.aborted) return;
-    requestAnimationFrame(tickRain);
-    if (document.hidden || t - lastRain < 90) return;
-    lastRain = t;
-    rctx.fillStyle = 'rgba(4,7,10,0.16)';
-    rctx.fillRect(0, 0, innerWidth, innerHeight);
-    rctx.font = '13px "JetBrains Mono", monospace';
-    drops.forEach((y, i) => {
-      rctx.fillStyle = Math.random() < .04 ? 'rgba(57,255,136,.55)' : 'rgba(57,255,136,.16)';
-      rctx.fillText('0123456789ABCDEF'[Math.random() * 16 | 0], i * 18 + 4, y * 18);
-      drops[i] = y * 18 > innerHeight && Math.random() > .975 ? 0 : y + 1;
-    });
-  }
+  col += vec3(0.0, 0.4, 0.25) * 0.07 * smoothstep(0.015, 0.0, abs(uv.y - fract(T * 0.07)));
+  vec2 q = uv - 0.5;
+  col *= 1.0 - dot(q, q) * 1.2;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+  (function startBackground() {
+    if (reduced) return;
+    const cv = $('bg');
+    let gl = null;
+    try { gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' }); } catch {}
+    if (!gl) return;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }'));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const uR = gl.getUniformLocation(prog, 'R'), uT = gl.getUniformLocation(prog, 'T');
+    // Halv opløsning og 30 fps er rigeligt til en baggrund og sparer batteri
+    const size = () => {
+      const k = 0.5 * Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.max(1, innerWidth * k | 0); cv.height = Math.max(1, innerHeight * k | 0);
+      gl.viewport(0, 0, cv.width, cv.height);
+    };
+    size();
+    on(window, 'resize', size);
+    let last = 0;
+    const frame = t => {
+      if (ac.signal.aborted) return;
+      requestAnimationFrame(frame);
+      if (document.hidden || t - last < 33) return;
+      last = t;
+      gl.uniform2f(uR, cv.width, cv.height);
+      gl.uniform1f(uT, t / 1000);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+    requestAnimationFrame(frame);
+  })();
   sizeCanvas(fx, ctx);
-  sizeRain();
-  if (!reduced) requestAnimationFrame(tickRain);
 
   // ---- Lyd og vibration ----
   let actx = null;
@@ -844,7 +918,7 @@ td.pct { color: var(--neon); }
     tb.appendChild(tr);
   });
 
-  on(window, 'resize', () => { sizeCanvas(fx, ctx); sizeRain(); if (S) renderTray(); });
+  on(window, 'resize', () => { sizeCanvas(fx, ctx); if (S) renderTray(); });
 
   // ---- Start ----
   function valid(s) { return s && Array.isArray(s.grid) && s.grid.length === N * N && Array.isArray(s.tray) && s.tray.length === 3 && typeof s.seed === 'string'; }
