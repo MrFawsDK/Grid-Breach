@@ -1,0 +1,30 @@
+<!doctype html><html><body style="margin:0;background:#04070a">
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const cv = document.getElementById('c'), SZ = +location.hash.slice(1) || 512;
+cv.width = cv.height = SZ;
+const c = cv.getContext('2d');
+c.scale(SZ / 512, SZ / 512);
+c.fillStyle = '#04070a'; c.fillRect(0, 0, 512, 512);
+// Brik i midten (indenfor maskable-zonen): et L af neon-felter
+const cells = [[0,0],[1,0],[2,0],[2,1],[2,2],[0,2]];
+const colors = ['#39ff88','#39ff88','#39ff88','#19e6ff','#19e6ff','#ff2bd6'];
+const s = 74, g = 10, ox = 256 - (3*s+2*g)/2, oy = 256 - (3*s+2*g)/2;
+for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+  c.strokeStyle = '#12303b'; c.lineWidth = 3; c.strokeRect(ox + x*(s+g), oy + y*(s+g), s, s);
+}
+cells.forEach(([y, x], i) => {
+  const px = ox + x*(s+g), py = oy + y*(s+g), col = colors[i];
+  c.shadowColor = col; c.shadowBlur = 28;
+  c.fillStyle = col + '40'; c.fillRect(px, py, s, s);
+  c.strokeStyle = col; c.lineWidth = 5; c.strokeRect(px + 2.5, py + 2.5, s - 5, s - 5);
+  c.beginPath(); c.arc(px + s/2, py + s/2, 11, 0, Math.PI*2); c.fillStyle = col; c.fill();
+});
+c.shadowBlur = 0;
+// Hjørnebeslag
+c.strokeStyle = '#39ff88'; c.lineWidth = 8; c.shadowColor = '#39ff88'; c.shadowBlur = 16;
+const m = 112, L = 36;
+[[m,m,1,1],[512-m,m,-1,1],[m,512-m,1,-1],[512-m,512-m,-1,-1]].forEach(([x,y,dx,dy]) => {
+  c.beginPath(); c.moveTo(x, y + dy*L); c.lineTo(x, y); c.lineTo(x + dx*L, y); c.stroke();
+});
+</script></body></html>
