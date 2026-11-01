@@ -263,6 +263,7 @@ td.pct { color: var(--neon); }
       <ul>
         <li>Brikker trækkes tre ad gangen fra tabellen nedenfor med faste sandsynligheder.</li>
         <li>Alle tre brikker kan altid lægges på brættet på en eller anden måde, nogle gange først efter du har ryddet en linje. Du kan stadig tabe, hvis du lægger dem dumt.</li>
+        <li>Spillet trækker flere sæt og vælger oftest et, der passer godt til brættet: et der kan rydde linjer, store brikker når brættet er tomt, og ikke tre ens. Det ser kun på brættet.</li>
         <li>Trækket bruger kun seed'et og brættet. Din score, din spilletid og din telefon indgår aldrig.</li>
         <li>Samme seed og samme træk giver de samme brikker på alle enheder. Send dit seed til en ven og dyst.</li>
         <li>Ingen reklamer, ingen sporing, ingen netværkskald. Alt gemmes kun på din telefon.</li>
@@ -290,7 +291,7 @@ td.pct { color: var(--neon); }
   const on = (el, ev, fn) => el.addEventListener(ev, fn, { signal: ac.signal });
   const N = 8;
   const FAMILIES = [
-    { name: 'Prik', w: 1, rows: ['#'] },
+    { name: 'Prik', w: 0.5, rows: ['#'] },
     { name: 'To på stribe', w: 2, rows: ['##'] },
     { name: 'Tre på stribe', w: 2, rows: ['###'] },
     { name: 'Fire på stribe', w: 2, rows: ['####'] },
@@ -441,9 +442,62 @@ td.pct { color: var(--neon); }
     const f = SMALL[Math.floor(rand() * SMALL.length)];
     return { f, o: Math.floor(rand() * FAMILIES[f].orients.length) };
   }
+  // Hvor mange linjer kan sættet rydde, hvis man lægger det godt? Søger kun de mest lovende placeringer,
+  // så det er hurtigt. Giver -1, hvis søgningen ikke fandt en vej.
+  function bestClears(g, refs) {
+    if (!refs.length) return 0;
+    let best = -1;
+    for (let i = 0; i < refs.length; i++) {
+      const p = piece(refs[i]), rest = refs.filter((_, j) => j !== i), moves = [];
+      for (let r = 0; r <= N - p.h; r++) for (let c = 0; c <= N - p.w; c++) {
+        if (!fitsOn(g, p, r, c)) continue;
+        const h = g.slice();
+        let snug = 0;
+        for (const [y, x] of p.cells) {
+          const rr = r + y, cc = c + x;
+          h[rr * N + cc] = 0;
+          for (const [dy, dx] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+            const ny = rr + dy, nx = cc + dx;
+            if (ny < 0 || nx < 0 || ny >= N || nx >= N || g[ny * N + nx] >= 0) snug++;
+          }
+        }
+        const { set, n } = fullLines(h);
+        set.forEach(k => { h[k] = -1; });
+        moves.push({ n, snug, h });
+      }
+      moves.sort((a, b) => b.n - a.n || b.snug - a.snug);
+      for (const mv of moves.slice(0, 4)) {
+        const sub = bestClears(mv.h, rest);
+        if (sub >= 0) best = Math.max(best, mv.n + sub);
+      }
+    }
+    return best;
+  }
+  // Et godt sæt kan rydde linjer, har en størrelse der passer til hvor fyldt brættet er
+  // (tomt bræt = store brikker), og er ikke tre af samme slags.
+  function scoreSet(g, refs) {
+    const fill = g.filter(v => v >= 0).length / (N * N);
+    const cells = refs.reduce((n, ref) => n + piece(ref).cells.length, 0);
+    const kinds = new Set(refs.map(ref => ref.f)).size;
+    return Math.max(0, bestClears(g, refs)) * 3.2
+      - Math.abs(cells - (15 - fill * 9)) * 0.35
+      + (kinds === 3 ? 1 : kinds === 2 ? 0 : -2.5);
+  }
   function deal() {
     let set = null;
-    for (let t = 0; t < 30 && !set; t++) { const s = [draw(), draw(), draw()]; if (solvable(S.grid, s)) set = s; }
+    // Træk op til 8 sæt, der alle kan lægges, og vælg tilfældigt blandt dem med de bedste som de mest sandsynlige
+    const cands = [];
+    for (let t = 0; t < 40 && cands.length < 8; t++) {
+      const s = [draw(), draw(), draw()];
+      if (solvable(S.grid, s)) cands.push({ s, score: scoreSet(S.grid, s) });
+    }
+    if (cands.length) {
+      const top = Math.max(...cands.map(c => c.score));
+      const ws = cands.map(c => Math.exp((c.score - top) / 1.2));
+      let r = rand() * ws.reduce((a, b) => a + b, 0), k = 0;
+      while (r >= ws[k] && k < ws.length - 1) { r -= ws[k]; k++; }
+      set = cands[k].s;
+    }
     for (let t = 0; t < 30 && !set; t++) { const s = [drawSmall(), drawSmall(), drawSmall()]; if (solvable(S.grid, s)) set = s; }
     if (!set) set = [{ f: 0, o: 0 }, { f: 0, o: 0 }, { f: 0, o: 0 }];
     S.sets = (S.sets || 0) + 1;
