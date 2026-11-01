@@ -23,6 +23,8 @@ Hvert spil har et seed, f.eks. `K7RM2Q`. Samme seed giver de samme brikker hos a
 
 De tre brikker du får, kan altid lægges på brættet på en eller anden måde. Nogle gange skal du først rydde en linje for at få plads til den sidste. Spillet tjekker det, før du får brikkerne. Du kan stadig tabe, men så er det fordi du lagde dem dumt.
 
+Spillet trækker også flere sæt og vælger oftest et, der passer godt til brættet. Altså et der kan rydde linjer, store brikker når brættet er tomt, og ikke tre af samme slags. Det er det, der gør at det føles som om brikkerne er lavet til dit bræt. Det ser stadig kun på brættet, så det er det samme for alle.
+
 ## Point
 
 - 1 point pr. felt du lægger
